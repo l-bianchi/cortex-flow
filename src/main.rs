@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 use dotenv::dotenv;
 use meilisearch_sdk::*;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -19,6 +20,7 @@ enum Commands {
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Movie {
+    id: String,
     title: String,
 }
 
@@ -49,9 +51,10 @@ async fn main() {
                 .index("movies")
                 .add_documents(
                     &[Movie {
+                        id: Uuid::new_v4().to_string(),
                         title: String::from(title),
                     }],
-                    Some("title"),
+                    Some("id"),
                 )
                 .await
                 .unwrap();
