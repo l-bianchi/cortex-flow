@@ -15,7 +15,7 @@ struct Cli {
 enum Commands {
     Search { prompt: String },
     Index { title: String },
-    Clean { index: String },
+    Clean {},
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -34,21 +34,16 @@ async fn main() {
         std::env::var("MEILISEARCH_API_KEY").expect("MEILISEARCH_API_KEY must be set.");
 
     let client = Client::new(meilisearch_url, Some(meilisearch_api_key));
+    let movies = client.index("movies");
 
     match &cli.command {
         Some(Commands::Search { prompt }) => {
-            let results: SearchResults<Movie> = client
-                .index("movies")
-                .search()
-                .with_query(prompt)
-                .execute()
-                .await
-                .unwrap();
+            let results: SearchResults<Movie> =
+                movies.search().with_query(prompt).execute().await.unwrap();
             println!("{:?}", results.hits);
         }
         Some(Commands::Index { title }) => {
-            client
-                .index("movies")
+            movies
                 .add_documents(
                     &[Movie {
                         id: Uuid::new_v4().to_string(),
@@ -59,8 +54,8 @@ async fn main() {
                 .await
                 .unwrap();
         }
-        Some(Commands::Clean { index }) => {
-            client.index(index).delete().await.unwrap();
+        Some(Commands::Clean {}) => {
+            movies.delete().await.unwrap();
         }
         None => {}
     }
